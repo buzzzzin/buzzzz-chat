@@ -1,7 +1,11 @@
-buzzzz:
+buzz:
+  ws:
+    endpoints:
+      - /chat/buzz/**
+      - /chat/personal/**
   chat:
     constant:
-      recent-buzzzz-chat: 10
+      recent-buzz-chat: 10
 api:
   header:
     auth-token: x-auth-token

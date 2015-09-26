@@ -37,7 +37,7 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
     ChatRepository chatRepository;
     @Autowired
     ObjectMapper objectMapper;
-    @Value("${buzzzz.chat.constant.recent-buzzzz-chat}")
+    @Value("${buzz.chat.constant.recent-buzz-chat}")
     int recentNChat;
 
     public void setSocketContextHolder(WebSocketContextHolder socketContextHolder) {
