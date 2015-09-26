@@ -1,4 +1,4 @@
-package in.buzzzz.config.websocket;
+package in.buzzzz.context;
 
 import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketSession;
@@ -16,7 +16,7 @@ public class WebSocketContextHolder {
 
     @PostConstruct
     public void init() {
-        sessionContext = new HashMap<>();
+        sessionContext = new HashMap<String, WebSocketSession>();
     }
 
     public void registerWebSocketSession(WebSocketSession session) {

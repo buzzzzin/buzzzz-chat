@@ -1,7 +1,7 @@
 package in.buzzzz.messaging;
 
-import in.buzzzz.config.websocket.ChannelContextHolder;
-import in.buzzzz.config.websocket.WebSocketContextHolder;
+import in.buzzzz.context.ChannelContextHolder;
+import in.buzzzz.context.WebSocketContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import org.springframework.web.socket.CloseStatus;
@@ -31,6 +31,12 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
         this.payloadHandler = payloadHandler;
     }
 
+    /**
+     * This method will be invoked just after connection established and {@link WebSocketSession} created.
+     * It'll register session into {@link WebSocketContextHolder} and channel name to {@link ChannelContextHolder}.
+     * @param session
+     * @throws Exception
+     */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Assert.notNull(session);
@@ -45,6 +51,13 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
         payloadHandler.handlePayload(session, message);
     }
 
+    /**
+     * If any {@link WebSocketSession} closed this method will be triggered. This method will clear
+     * {@link WebSocketContextHolder} and {@link ChannelContextHolder}.
+     * @param session
+     * @param status
+     * @throws Exception
+     */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         logger.info("Destroying WebSocket session " + session.getId());

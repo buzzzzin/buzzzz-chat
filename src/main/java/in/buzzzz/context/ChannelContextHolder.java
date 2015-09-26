@@ -1,4 +1,4 @@
-package in.buzzzz.config.websocket;
+package in.buzzzz.context;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
