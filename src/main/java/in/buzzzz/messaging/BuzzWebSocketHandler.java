@@ -5,6 +5,7 @@ import in.buzzzz.context.ChannelContextHolder;
 import in.buzzzz.context.WebSocketContextHolder;
 import in.buzzzz.domain.Chat;
 import in.buzzzz.repositories.ChatRepository;
+import in.buzzzz.utils.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -66,12 +69,24 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
         Sort sort = new Sort(Sort.Direction.DESC, "dateCreated");
         Pageable pageable = new PageRequest(0, recentNChat, sort);
         List<Chat> recentChats = chatRepository.findAllByDestination(session.getUri().toString(), pageable);
-        for (Chat chat : recentChats) {
-            try {
-                session.sendMessage(new TextMessage(objectMapper.writeValueAsString(chat)));
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                e.printStackTrace();
+        if(ObjectUtils.isNotEmptyList(recentChats)){
+            Collections.sort(recentChats, new Comparator<Chat>() {
+                @Override
+                public int compare(Chat chat1, Chat chat2) {
+                    return (int)(chat1.getDateCreated().getTime() - chat2.getDateCreated().getTime());
+                }
+            });
+            for (Chat chat : recentChats) {
+                try {
+                    session.sendMessage(new TextMessage(objectMapper.writeValueAsString(chat)));
+                    try{
+                        Thread.sleep(50);
+                    }catch (Exception e){
+                    }
+                } catch (Exception e) {
+                    logger.error(e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
     }

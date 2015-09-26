@@ -17,7 +17,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.List;
 
-import static in.buzzzz.utils.ObjectUtils.isEmptyObject;
+import static in.buzzzz.utils.ObjectUtils.*;
 
 /**
  * @author jitendra on 26/9/15.
@@ -46,7 +46,7 @@ public class PayloadHandler {
      * @param message
      */
     void handlePayload(WebSocketSession session, WebSocketMessage message) {
-        if (message != null) {
+        if (isNotEmptyObject(message)) {
             logger.info("Handling payload started");
             String payloadString = (String) message.getPayload();
             logger.info(String.format("payload String is --  %s --", payloadString));
@@ -57,7 +57,8 @@ public class PayloadHandler {
                 e.printStackTrace();
             }
             logger.info(String.format("Object created --  %s --", payload));
-            if (payload != null) {
+            if (isNotEmptyObject(payload)) {
+                payload.setDestination(session.getUri().toString());
                 consumePayload(session, payload);
             }
         }
