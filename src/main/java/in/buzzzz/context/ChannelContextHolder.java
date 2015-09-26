@@ -17,7 +17,7 @@ public class ChannelContextHolder {
 
     @PostConstruct
     public void init() {
-        channelContext = new HashMap<>();
+        channelContext = new HashMap<String, List<String>>();
     }
 
     public void registerChannelContext(String uri, String sessionId) {
