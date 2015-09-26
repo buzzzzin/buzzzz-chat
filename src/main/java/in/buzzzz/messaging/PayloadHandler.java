@@ -3,9 +3,13 @@ package in.buzzzz.messaging;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.buzzzz.context.ChannelContextHolder;
 import in.buzzzz.context.WebSocketContextHolder;
-import in.buzzzz.enums.DestinationEnum;
+import in.buzzzz.domain.Chat;
+import in.buzzzz.domain.Notification;
+import in.buzzzz.enums.ChannelType;
 import in.buzzzz.services.AuthService;
 import in.buzzzz.services.ChatService;
+import in.buzzzz.services.ForkJoinTaskExecutorService;
+import in.buzzzz.services.NotificationService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +21,8 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.List;
 
-import static in.buzzzz.utils.ObjectUtils.*;
+import static in.buzzzz.utils.ObjectUtils.isEmptyObject;
+import static in.buzzzz.utils.ObjectUtils.isNotEmptyObject;
 
 /**
  * @author jitendra on 26/9/15.
@@ -33,7 +38,11 @@ public class PayloadHandler {
     @Autowired
     ChatService chatService;
     @Autowired
+    NotificationService notificationService;
+    @Autowired
     AuthService authService;
+    @Autowired
+    ForkJoinTaskExecutorService forkJoinTaskExecutorService;
     @Value("${api.invalid-auth-token.error}")
     String invalidTokenError;
 
@@ -88,13 +97,13 @@ public class PayloadHandler {
             }
             logger.error("Failed to consume payload");
         } else {
-            DestinationEnum destination = DestinationEnum.findDestination(payload.getDestination());
+            ChannelType destination = ChannelType.findChannelType(payload.getDestination());
             switch (destination) {
-                case CHANNEL:
-                    handleChannel(session, payload);
+                case TOPIC:
+                    handleTopicChannel(session, payload);
                     break;
-                case CHAT:
-                    handleChat(session, payload);
+                case QUEUE:
+                    handleQueueChannel(session, payload);
                     break;
             }
         }
@@ -107,13 +116,28 @@ public class PayloadHandler {
      * @param session
      * @param payload
      */
-    void handleChat(WebSocketSession session, Payload payload) {
-        broadcastMessage(session, payload, false);
-        chatService.saveMessage(payload);
+    void handleQueueChannel(WebSocketSession session, Payload payload) {
+        if (isNotEmptyObject(payload.getType()) && payload.getType().equalsIgnoreCase("CHAT")) {
+            Chat chat = chatService.saveMessage(payload);
+            payload.setData(isNotEmptyObject(chat) ? chat : payload.getData());
+        } else {
+            Notification notification = notificationService.saveNotification(payload);
+            payload.setData(isNotEmptyObject(notification) ? notification : payload.getData());
+        }
+        broadcastMessage(session, payload, true);
     }
 
-    void handleChannel(WebSocketSession session, Payload payload) {
-
+    /**
+     * This method will handle Topic based channel handling. Where multiple users will be
+     * listening on same topic.
+     *
+     * @param session
+     * @param payload
+     */
+    void handleTopicChannel(WebSocketSession session, Payload payload) {
+        Chat chat = chatService.saveMessage(payload);
+        payload.setData(isNotEmptyObject(chat) ? chat : payload.getData());
+        broadcastMessage(session, payload, false);
     }
 
     /**
@@ -125,20 +149,31 @@ public class PayloadHandler {
      */
     void broadcastMessage(WebSocketSession session, Payload payload, boolean excludeCurrentSession) {
         List<String> sessionIds = channelContextHolder.getSessions(payload.getDestination());
+        clearSensitiveData(payload);
         logger.info(" Session Ids -- " + sessionIds + " --");
+        forkJoinTaskExecutorService.start();
         for (String sessionId : sessionIds) {
             logger.info("Sending message to -- " + sessionId + " --");
             if (excludeCurrentSession && sessionId.equals(session.getId())) {
                 continue;
             }
             try {
-                webSocketContextHolder.getWebSocketSession(sessionId)
-                        .sendMessage(
-                                new TextMessage(objectMapper.writeValueAsString(payload.getData()))
-                        );
-            } catch (IOException e) {
+                PublishMessageTask publishMessageTask = new PublishMessageTask(
+                        webSocketContextHolder.getWebSocketSession(sessionId),
+                        new TextMessage(objectMapper.writeValueAsString(payload))
+                );
+                forkJoinTaskExecutorService.submit(publishMessageTask);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
                 e.printStackTrace();
             }
+        }
+        forkJoinTaskExecutorService.shutdown();
+    }
+
+    private void clearSensitiveData(Payload payload) {
+        if(isNotEmptyObject(payload)) {
+            payload.setToken("");
         }
     }
 }

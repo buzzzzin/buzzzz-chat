@@ -17,13 +17,14 @@ public class ChatService {
     @Autowired
     ChatRepository chatRepository;
 
-    public void saveMessage(Payload payload) {
+    public Chat saveMessage(Payload payload) {
         Chat chat = bindRawObjectToChat(payload.getData());
         if (chat != null) {
-            chat.setDestination(payload.getDestination());
+            chat.setChannel(payload.getDestination());
             chat.setDateCreated(new Date());
-            chatRepository.save(chat);
+            return chatRepository.save(chat);
         }
+        return null;
     }
 
     private Chat bindRawObjectToChat(Object rawMessageData) {

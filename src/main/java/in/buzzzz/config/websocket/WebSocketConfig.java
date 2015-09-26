@@ -8,7 +8,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.util.Assert;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -24,15 +24,10 @@ import java.util.List;
 public class WebSocketConfig implements WebSocketConfigurer {
     Logger logger = Logger.getLogger(getClass().getName());
 
-    @Value("${buzz.ws.endpoints}")
-    List<String> wsEndpoints;
-
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        Assert.notEmpty(wsEndpoints);
-        String urls[] = new String[wsEndpoints.size()];
-        urls = wsEndpoints.toArray(urls);
-        logger.info(String.format("Registering Web Socket endpoints -- %s --", wsEndpoints));
+        String urls[] = new String[]{"/chat/topic/**", "/chat/queue/**"};
+        logger.info("Registering Web Socket endpoints");
         registry
                 .addHandler(webSocketHandler(), urls)
                 .setAllowedOrigins("*");

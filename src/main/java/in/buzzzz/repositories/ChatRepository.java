@@ -11,5 +11,5 @@ import java.util.List;
  * @author jitendra on 26/9/15.
  */
 public interface ChatRepository extends MongoRepository<Chat, String> {
-    List<Chat> findAllByDestination(String destination, Pageable pageable);
+    List<Chat> findAllByChannel(String channel, Pageable pageable);
 }

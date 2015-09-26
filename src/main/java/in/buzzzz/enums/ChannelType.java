@@ -3,20 +3,20 @@ package in.buzzzz.enums;
 /**
  * @author jitendra on 26/9/15.
  */
-public enum DestinationEnum {
-    CHANNEL("/buzz/channel"),
-    CHAT("/buzz/chat");
+public enum ChannelType {
+    TOPIC("/chat/topic"),
+    QUEUE("/chat/queue");
 
     private String displayName;
 
-    DestinationEnum(String displayName) {
+    ChannelType(String displayName) {
         this.displayName = displayName;
     }
 
-    public static DestinationEnum findDestination(String displayName) {
-        DestinationEnum destinationEnum = null;
+    public static ChannelType findChannelType(String displayName) {
+        ChannelType destinationEnum = null;
         if (displayName != null) {
-            for (DestinationEnum destination : DestinationEnum.values()) {
+            for (ChannelType destination : ChannelType.values()) {
                 if (displayName.startsWith(destination.displayName)) {
                     destinationEnum = destination;
                     break;

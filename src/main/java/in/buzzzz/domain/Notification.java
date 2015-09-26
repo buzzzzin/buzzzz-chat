@@ -7,16 +7,17 @@ import java.util.Date;
 /**
  * @author jitendra on 26/9/15.
  */
-public class Chat {
+public class Notification {
 
     @Id
     private String id;
-    private String channel;
-    private String message;
-    private String senderName;
+    private String notificationText;
     private String senderId;
+    private String senderName;
     private String receiverId;
-    private String imageUrl;
+    private String buzzId;
+    private String buzzName;
+    private Boolean read;
     private Date dateCreated;
 
     public String getId() {
@@ -27,28 +28,12 @@ public class Chat {
         this.id = id;
     }
 
-    public String getChannel() {
-        return channel;
+    public String getNotificationText() {
+        return notificationText;
     }
 
-    public void setChannel(String channel) {
-        this.channel = channel;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getSenderName() {
-        return senderName;
-    }
-
-    public void setSenderName(String senderName) {
-        this.senderName = senderName;
+    public void setNotificationText(String notificationText) {
+        this.notificationText = notificationText;
     }
 
     public String getSenderId() {
@@ -59,6 +44,14 @@ public class Chat {
         this.senderId = senderId;
     }
 
+    public String getSenderName() {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
+    }
+
     public String getReceiverId() {
         return receiverId;
     }
@@ -67,12 +60,28 @@ public class Chat {
         this.receiverId = receiverId;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getBuzzId() {
+        return buzzId;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setBuzzId(String buzzId) {
+        this.buzzId = buzzId;
+    }
+
+    public String getBuzzName() {
+        return buzzName;
+    }
+
+    public void setBuzzName(String buzzName) {
+        this.buzzName = buzzName;
+    }
+
+    public Boolean getRead() {
+        return read;
+    }
+
+    public void setRead(Boolean read) {
+        this.read = read;
     }
 
     public Date getDateCreated() {

@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.buzzzz.context.ChannelContextHolder;
 import in.buzzzz.context.WebSocketContextHolder;
 import in.buzzzz.domain.Chat;
+import in.buzzzz.enums.ChannelType;
 import in.buzzzz.repositories.ChatRepository;
+import in.buzzzz.services.ForkJoinTaskExecutorService;
 import in.buzzzz.utils.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,8 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
     ChatRepository chatRepository;
     @Autowired
     ObjectMapper objectMapper;
+    @Autowired
+    ForkJoinTaskExecutorService forkJoinTaskExecutorService;
     @Value("${buzz.chat.constant.recent-buzz-chat}")
     int recentNChat;
 
@@ -61,33 +65,40 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
         logger.info("New WebSocket session register " + session.getId());
         socketContextHolder.registerWebSocketSession(session);
         channelContextHolder.registerChannelContext(session.getUri().toString(), session.getId());
-        sendRecentNChatMessagesToUser(session);
+        ChannelType channelType = ChannelType.findChannelType(session.getUri().toString());
+        if (ObjectUtils.isNotEmptyObject(channelType) && channelType == ChannelType.TOPIC)
+            publishNRecentChatMessagesToUser(session);
     }
 
-    private void sendRecentNChatMessagesToUser(WebSocketSession session) {
+    /**
+     * This method will send recent N chat message to the connected client.
+     *
+     * @param session
+     */
+    private void publishNRecentChatMessagesToUser(WebSocketSession session) {
         logger.info(String.format("Sending recent %s chats", recentNChat));
         Sort sort = new Sort(Sort.Direction.DESC, "dateCreated");
         Pageable pageable = new PageRequest(0, recentNChat, sort);
-        List<Chat> recentChats = chatRepository.findAllByDestination(session.getUri().toString(), pageable);
-        if(ObjectUtils.isNotEmptyList(recentChats)){
+        List<Chat> recentChats = chatRepository.findAllByChannel(session.getUri().toString(), pageable);
+        if (ObjectUtils.isNotEmptyList(recentChats)) {
             Collections.sort(recentChats, new Comparator<Chat>() {
                 @Override
                 public int compare(Chat chat1, Chat chat2) {
-                    return (int)(chat1.getDateCreated().getTime() - chat2.getDateCreated().getTime());
+                    return (int) (chat1.getDateCreated().getTime() - chat2.getDateCreated().getTime());
                 }
             });
+            forkJoinTaskExecutorService.start();
             for (Chat chat : recentChats) {
                 try {
-                    session.sendMessage(new TextMessage(objectMapper.writeValueAsString(chat)));
-                    try{
-                        Thread.sleep(50);
-                    }catch (Exception e){
-                    }
+                    forkJoinTaskExecutorService.submit(
+                            new PublishMessageTask(session, new TextMessage(objectMapper.writeValueAsString(chat)))
+                    );
                 } catch (Exception e) {
                     logger.error(e.getMessage());
                     e.printStackTrace();
                 }
             }
+            forkJoinTaskExecutorService.shutdown();
         }
     }
 

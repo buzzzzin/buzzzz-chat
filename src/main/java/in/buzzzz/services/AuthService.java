@@ -29,6 +29,10 @@ public class AuthService {
     String tokenValidEndpoint;
     @Value("${api.header.auth-token}")
     String authTokenHeader;
+    @Value("${api.header.app-key}")
+    String appKey;
+    @Value("${api.header.app-secret-value}")
+    String appKeyValue;
     @Autowired
     HttpBuilder builder;
     @Autowired
@@ -46,6 +50,7 @@ public class AuthService {
         String tokenValidUrl = restApiDomain.concat(tokenValidEndpoint);
         logger.info(String.format("Token validation URL prepared -- %s --", tokenValidUrl));
         httpHeaders.put(authTokenHeader, token);
+        httpHeaders.put(appKey, appKeyValue);
         String jsonString = builder.httpPostWithHeaders(tokenValidUrl, httpHeaders);
         logger.info(String.format("Token validation Response received -- %s --", jsonString));
         if (isNotEmptyObject(jsonString)) {

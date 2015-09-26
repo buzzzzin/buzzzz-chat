@@ -4,18 +4,18 @@ package in.buzzzz.messaging;
  * @author jitendra on 26/9/15.
  */
 public class Payload {
-    private String command;
+    private String type;
     private String destination;
     private String action;
     private Object data;
     private String token;
 
-    public String getCommand() {
-        return command;
+    public String getType() {
+        return type;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getDestination() {

@@ -9,6 +9,8 @@ buzz:
 api:
   header:
     auth-token: x-auth-token
+    app-key: Secret-Key
+    app-secret-value: myAppKey
   server:
     domain: http://10.1.13.142:9090
   endpoint:
