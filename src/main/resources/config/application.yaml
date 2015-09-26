@@ -1,3 +1,7 @@
+buzzzz:
+  chat:
+    constant:
+      recent-buzzzz-chat: 10
 api:
   header:
     auth-token: x-auth-token

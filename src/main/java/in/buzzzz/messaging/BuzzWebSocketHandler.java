@@ -1,15 +1,21 @@
 package in.buzzzz.messaging;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.buzzzz.context.ChannelContextHolder;
 import in.buzzzz.context.WebSocketContextHolder;
+import in.buzzzz.domain.Chat;
+import in.buzzzz.repositories.ChatRepository;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.util.Assert;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.logging.Logger;
+import java.util.List;
 
 /**
  * @author jitendra on 25/9/15.
@@ -22,6 +28,12 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     ChannelContextHolder channelContextHolder;
+    @Autowired
+    ChatRepository chatRepository;
+    @Autowired
+    ObjectMapper objectMapper;
+    @Value("${buzzzz.chat.constant.recent-buzzzz-chat}")
+    int recentNChat;
 
     public void setSocketContextHolder(WebSocketContextHolder socketContextHolder) {
         this.socketContextHolder = socketContextHolder;
@@ -34,6 +46,7 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
     /**
      * This method will be invoked just after connection established and {@link WebSocketSession} created.
      * It'll register session into {@link WebSocketContextHolder} and channel name to {@link ChannelContextHolder}.
+     *
      * @param session
      * @throws Exception
      */
@@ -43,17 +56,32 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
         logger.info("New WebSocket session register " + session.getId());
         socketContextHolder.registerWebSocketSession(session);
         channelContextHolder.registerChannelContext(session.getUri().toString(), session.getId());
+        sendRecentNChatMessagesToUser(session);
+    }
+
+    private void sendRecentNChatMessagesToUser(WebSocketSession session) {
+        logger.info(String.format("Sending recent %s chats", recentNChat));
+        List<Chat> recentChats = chatRepository.findAllByDestination(session.getUri().toString(), new PageRequest(0, recentNChat));
+        for (Chat chat : recentChats) {
+            try {
+                session.sendMessage(new TextMessage(objectMapper.writeValueAsString(chat)));
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        logger.info("Message received -- "+message.getPayload() +" --");
+        logger.info("Message received -- " + message.getPayload() + " --");
         payloadHandler.handlePayload(session, message);
     }
 
     /**
      * If any {@link WebSocketSession} closed this method will be triggered. This method will clear
      * {@link WebSocketContextHolder} and {@link ChannelContextHolder}.
+     *
      * @param session
      * @param status
      * @throws Exception
