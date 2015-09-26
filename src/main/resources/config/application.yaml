@@ -1,0 +1,9 @@
+api:
+  header:
+    auth-token: x-auth-token
+  server:
+    domain: http://10.1.13.142:9090
+  endpoint:
+    token-valid: /auth/verification
+  invalid-auth-token:
+    error: Invalid auth token received in headers. So closing the Connection.

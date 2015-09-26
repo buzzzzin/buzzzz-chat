@@ -2,6 +2,11 @@ package in.buzzzz.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
+import org.apache.http.nio.reactor.IOReactorException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
@@ -17,7 +22,9 @@ public class AppConfig {
     }
 
     @Bean
-    public CloseableHttpAsyncClient clientHttpRequestFactory() {
-        return new HttpComponentsAsyncClientHttpRequestFactory().getHttpAsyncClient();
+    public CloseableHttpAsyncClient clientHttpRequestFactory() throws IOReactorException {
+        ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
+        PoolingNHttpClientConnectionManager connectionManager = new PoolingNHttpClientConnectionManager(ioReactor);
+        return HttpAsyncClients.custom().setConnectionManager(connectionManager).build();
     }
 }
