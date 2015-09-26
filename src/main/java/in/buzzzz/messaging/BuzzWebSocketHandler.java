@@ -9,6 +9,8 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.util.Assert;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -61,7 +63,9 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
 
     private void sendRecentNChatMessagesToUser(WebSocketSession session) {
         logger.info(String.format("Sending recent %s chats", recentNChat));
-        List<Chat> recentChats = chatRepository.findAllByDestination(session.getUri().toString(), new PageRequest(0, recentNChat));
+        Sort sort = new Sort(Sort.Direction.DESC, "dateCreated");
+        Pageable pageable = new PageRequest(0, recentNChat, sort);
+        List<Chat> recentChats = chatRepository.findAllByDestination(session.getUri().toString(), pageable);
         for (Chat chat : recentChats) {
             try {
                 session.sendMessage(new TextMessage(objectMapper.writeValueAsString(chat)));
