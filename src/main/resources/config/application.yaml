@@ -1,8 +1,8 @@
 buzz:
   ws:
     endpoints:
-      - /chat/buzz/**
-      - /chat/personal/**
+      - /chat/topic/**
+      - /chat/queue/**
   chat:
     constant:
       recent-buzz-chat: 10
