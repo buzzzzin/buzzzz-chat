@@ -3,6 +3,8 @@ package in.buzzzz.services;
 import in.buzzzz.domain.Notification;
 import in.buzzzz.messaging.Payload;
 import in.buzzzz.repositories.NotificationRepository;
+import in.buzzzz.utils.ObjectUtils;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,16 @@ public class NotificationService {
             return notificationRepository.save(notification);
         }
         return null;
+    }
+
+    public boolean markAsRead(String notificationId) {
+        Notification notification = notificationRepository.findOne(notificationId);
+        if(ObjectUtils.isNotEmptyObject(notification)) {
+            notification.setRead(true);
+            notificationRepository.save(notification);
+            return true;
+        }
+        return false;
     }
 
     private Notification bindRawObjectToChat(Object rawMessageData) {
