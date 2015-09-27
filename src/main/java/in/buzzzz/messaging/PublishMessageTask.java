@@ -27,7 +27,7 @@ public class PublishMessageTask implements Callable<Void> {
             try {
                 session.sendMessage(message);
             } catch (Exception e) {
-                logger.error(String.format("Error while publishing message [%s] to address [%s]", message.getPayload(), session.getUri().toString()));
+                logger.error(String.format("Error while publishing message [%s] to address [%s]. ERROR IS [ %s ]", message.getPayload(), session.getUri().toString(), e.getMessage()));
             }
         }
         return null;
