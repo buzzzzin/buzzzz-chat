@@ -89,9 +89,14 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
             });
             forkJoinTaskExecutorService.start();
             for (Chat chat : recentChats) {
+                Payload payload = new Payload();
+                payload.setData(chat);
+                payload.setDestination(session.getUri().toString());
                 try {
                     forkJoinTaskExecutorService.submit(
-                            new PublishMessageTask(session, new TextMessage(objectMapper.writeValueAsString(chat)))
+                            new PublishMessageTask(session, new TextMessage(
+                                    objectMapper.writeValueAsString(payload)
+                            ))
                     );
                 } catch (Exception e) {
                     logger.error(e.getMessage());
