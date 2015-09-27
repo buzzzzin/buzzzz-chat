@@ -6,7 +6,6 @@ import in.buzzzz.context.WebSocketContextHolder;
 import in.buzzzz.domain.Chat;
 import in.buzzzz.enums.ChannelType;
 import in.buzzzz.repositories.ChatRepository;
-import in.buzzzz.services.ForkJoinTaskExecutorService;
 import in.buzzzz.utils.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +38,6 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
     ChatRepository chatRepository;
     @Autowired
     ObjectMapper objectMapper;
-    @Autowired
-    ForkJoinTaskExecutorService forkJoinTaskExecutorService;
     @Value("${buzz.chat.constant.recent-buzz-chat}")
     int recentNChat;
 
@@ -87,23 +84,21 @@ public class BuzzWebSocketHandler extends TextWebSocketHandler {
                     return (int) (chat1.getDateCreated().getTime() - chat2.getDateCreated().getTime());
                 }
             });
-            forkJoinTaskExecutorService.start();
             for (Chat chat : recentChats) {
                 Payload payload = new Payload();
                 payload.setData(chat);
                 payload.setDestination(session.getUri().toString());
                 try {
-                    forkJoinTaskExecutorService.submit(
-                            new PublishMessageTask(session, new TextMessage(
+                    session.sendMessage(
+                            new TextMessage(
                                     objectMapper.writeValueAsString(payload)
-                            ))
+                            )
                     );
                 } catch (Exception e) {
                     logger.error(e.getMessage());
                     e.printStackTrace();
                 }
             }
-            forkJoinTaskExecutorService.shutdown();
         }
     }
 
